@@ -4,11 +4,17 @@ services:
     runtime: node
     rootDir: LibraLearn-backend-main
     plan: free
+
     buildCommand: |
-      chmod +x scripts/install-rhubarb.sh
-      ./scripts/install-rhubarb.sh
+      apt-get update && apt-get install -y wget unzip ffmpeg
+      wget https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip
+      unzip Rhubarb-Lip-Sync-1.13.0-Linux.zip
+      chmod +x Rhubarb-Lip-Sync-1.13.0-Linux/rhubarb
+      mv Rhubarb-Lip-Sync-1.13.0-Linux/rhubarb /usr/local/bin/rhubarb
       npm ci
+
     startCommand: npm start
+
     envVars:
       - key: NODE_ENV
         value: production
