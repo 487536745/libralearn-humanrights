@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: libralearn-backend
+    runtime: node
+    rootDir: LibraLearn-backend-main
+    plan: free
+    buildCommand: |
+      chmod +x scripts/install-rhubarb.sh
+      ./scripts/install-rhubarb.sh
+      npm ci
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVEN_LABS_API_KEY
+        sync: false
+      - key: RHUBARB_PATH
+        value: /usr/local/bin/rhubarb

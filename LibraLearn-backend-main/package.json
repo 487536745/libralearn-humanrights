@@ -1,0 +1,23 @@
+{
+  "name": "human-rights-avatar-backend",
+  "version": "1.0.0",
+  "description": "Backend for the  Human right avatar",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js --ext js"
+  },
+  "author": "F25CS123 <L1F22BSCS0423@ucp.edu.pk>",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "elevenlabs-node": "^1.2.0",
+    "express": "^4.18.2",
+    "openai": "^4.26.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

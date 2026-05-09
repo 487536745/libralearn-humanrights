@@ -1,0 +1,26 @@
+MEMBERS:
+L1F22BSCS0423
+L1F22BSCS0043
+L1F22BSCS0789
+
+F25CS123
+
+LIBRALEARN: CONVERSATIONAL AI FOR LEARNING HUMAN RIGHTS AND RESPONSIBILITIES
+
+MR. MUNEEB ALI MUZAFFAR
+
+abstract:
+A significant portion of the population particularly youth still unaware with their fundamental human rights [1]. This lack of awareness often results in social exclusion and vulnerability to injustice. As Calderón-Almendros explains, being deprived of knowledge about rights further deepens inequality and prevents individuals from exercising their freedoms effectively [1]. The proposed project, LibraLearn, aims to bridge this gap by creating an AI-driven platform that delivers human rights education in a simple, interactive, and relatable form. Using Unreal Engine MetaHuman, realistic avatars will be designed to represent digital educators, while D-ID APIs will animate these avatars with natural speech and facial expressions. Conversational AI will provide scenario-based guidance, supported by multilingual and text-to-speech features, ensuring accessibility for diverse audiences. By transforming complex legal texts into engaging conversations through lifelike avatars, LibraLearn seeks to raise awareness among 
+populations who would otherwise remain uninformed. The platform is expected to empower individuals by making human rights knowledge approachable, memorable, and widely accessible
+
+descripyion:
+LibraLearn is an AI-powered platform that teaches human rights through an interactive conversational avatar. It converts complex legal terms into simple, relatable lessons using lifelike 3D educators with voice interaction, empowering individuals to understand and exercise their rights
+
+
+Tools to be used
+Visual Studio Code, Node.js, npm, FFmpeg, Rhubarb Lip Sync, Git, GitHub, Postman, Blender/MetaHuman/ReadyPlayerMe/PlayerID/D-ID, Adobe PDF Reader, PDF-to-Text Extractor/OCR
+
+
+Technologies to be used
+JavaScript , React, React Three Fiber (R3F), Three.js, Express.js, OpenAI GPT-3.5 turbu API, ElevenLabs Text-to-Speech API, JSON Dataset
+
