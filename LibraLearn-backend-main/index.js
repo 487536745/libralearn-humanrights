@@ -71,6 +71,7 @@ app.use(cors());
 const port = Number(process.env.PORT) || 3000;
 const quizSessions = new Map();
 let ragIndex = null;
+let ragIndexBuildPromise = null;
 
 const resolveRhubarbExecutable = async () => {
   if (process.env.RHUBARB_PATH) {
@@ -315,11 +316,31 @@ const getPdfDirectory = () => {
 // ===== ADVANCED RAG SYSTEM =====
 
 let conversationHistory = new Map(); // Store conversation context
+const ENABLE_AI_QUERY_EXPANSION = process.env.ENABLE_AI_QUERY_EXPANSION === "true";
+const ENABLE_AI_RERANKING = process.env.ENABLE_AI_RERANKING === "true";
+const EMBEDDING_BATCH_SIZE = Math.max(1, Number(process.env.RAG_EMBED_BATCH_SIZE) || 50);
 
 // ===== QUERY EXPANSION =====
+const localExpandQuery = (question) => {
+  const trimmed = (question || "").trim();
+  if (!trimmed) return [question];
+
+  const expansions = [trimmed];
+  const lowered = trimmed.toLowerCase();
+
+  if (lowered.includes("human right")) expansions.push("fundamental human rights protections");
+  if (lowered.includes("women")) expansions.push("women rights legal protections equality");
+  if (lowered.includes("child")) expansions.push("children rights education safety protection");
+  if (lowered.includes("freedom")) expansions.push("freedom of speech religion assembly rights");
+  if (lowered.includes("law") || lowered.includes("legal")) expansions.push("constitutional legal rights remedies");
+  if (lowered.includes("discrimination")) expansions.push("anti discrimination equality under law");
+
+  return Array.from(new Set(expansions));
+};
+
 const expandQuery = async (question) => {
-  if (openai.apiKey === "-") {
-    return { original: question, expanded: [question] };
+  if (openai.apiKey === "-" || !ENABLE_AI_QUERY_EXPANSION) {
+    return { original: question, expanded: localExpandQuery(question) };
   }
 
   try {
@@ -354,7 +375,7 @@ Rules:
     };
   } catch (error) {
     console.warn("Query expansion failed:", error.message);
-    return { original: question, expanded: [question] };
+    return { original: question, expanded: localExpandQuery(question) };
   }
 };
 
@@ -420,7 +441,7 @@ const semanticChunkText = (text, maxChunkSize = 500) => {
 
 // ===== RERANKING LAYER =====
 const rerankChunks = async (question, chunks, topK = 5) => {
-  if (openai.apiKey === "-" || chunks.length <= topK) {
+  if (openai.apiKey === "-" || chunks.length <= topK || !ENABLE_AI_RERANKING) {
     return chunks.slice(0, topK);
   }
 
@@ -488,12 +509,6 @@ const calculateHybridScore = (query, chunk, semanticScore) => {
   
   // Weighted combination: 60% semantic, 40% keyword (increased keyword weight)
   const finalScore = (0.6 * semanticScore) + (0.4 * keywordScore) + exactPhraseBonus;
-  
-  // Debug logging
-  console.log(`Chunk scoring for query: "${query.substring(0, 50)}..."`);
-  console.log(`- Chunk: "${chunk.text.substring(0, 50)}..."`);
-  console.log(`- Semantic: ${semanticScore.toFixed(3)}, Keyword: ${keywordScore.toFixed(3)}, Bonus: ${exactPhraseBonus.toFixed(3)}`);
-  console.log(`- Final: ${finalScore.toFixed(3)}`);
   
   return {
     ...chunk,
@@ -595,21 +610,31 @@ const buildRagIndex = async () => {
     return { chunks, vectors: [] };
   }
 
-  const vectors = [];
-  for (const chunk of chunks) {
+  const vectors = new Array(chunks.length).fill(null);
+  for (let i = 0; i < chunks.length; i += EMBEDDING_BATCH_SIZE) {
+    const batchChunks = chunks.slice(i, i + EMBEDDING_BATCH_SIZE);
     try {
       const embeddingResp = await openai.embeddings.create({
         model: "text-embedding-3-small",
-        input: chunk.text,
+        input: batchChunks.map((chunk) => chunk.text),
       });
-      vectors.push(embeddingResp.data[0].embedding);
+      embeddingResp.data.forEach((item, idx) => {
+        vectors[i + idx] = item?.embedding || null;
+      });
     } catch (error) {
-      console.warn(`Failed to embed chunk ${chunk.id}:`, error.message);
-      vectors.push(null); // Maintain array alignment
+      console.warn(
+        `Failed to embed batch ${i}-${i + batchChunks.length - 1}:`,
+        error.message
+      );
     }
   }
 
-  return { chunks, vectors };
+  const vectorByChunkId = new Map();
+  chunks.forEach((chunk, index) => {
+    vectorByChunkId.set(chunk.id, vectors[index] || null);
+  });
+
+  return { chunks, vectors, vectorByChunkId };
 };
 
 // ===== MEMORY MANAGEMENT =====
@@ -688,10 +713,8 @@ const retrieveChunks = async ({ question, sessionId, topK = 5, sourceFilter = ""
 
         const semanticResults = filteredChunks
           .map((chunk) => {
-            const vectorIndex = index.chunks.findIndex((c) => c.id === chunk.id);
-            const vector = index.vectors[vectorIndex];
-            
-            if (!vector || vectorIndex === -1) return null;
+            const vector = index.vectorByChunkId?.get(chunk.id) ?? null;
+            if (!vector) return null;
             
             const semanticScore = cosineSimilarity(queryVector, vector);
             return calculateHybridScore(query, chunk, semanticScore);
@@ -718,12 +741,21 @@ const retrieveChunks = async ({ question, sessionId, topK = 5, sourceFilter = ""
 };
 
 const ensureRagIndex = async () => {
-  if (!ragIndex) {
-    console.log("Building RAG index...");
-    ragIndex = await buildRagIndex();
-    console.log(`RAG index built with ${ragIndex.chunks.length} chunks`);
+  if (ragIndex) return ragIndex;
+
+  if (!ragIndexBuildPromise) {
+    ragIndexBuildPromise = (async () => {
+      console.log("Building RAG index...");
+      const built = await buildRagIndex();
+      console.log(`RAG index built with ${built.chunks.length} chunks`);
+      ragIndex = built;
+      return built;
+    })().finally(() => {
+      ragIndexBuildPromise = null;
+    });
   }
-  return ragIndex;
+
+  return ragIndexBuildPromise;
 };
 
 // ===== ADVANCED ANSWER GENERATION WITH FALLBACK =====
