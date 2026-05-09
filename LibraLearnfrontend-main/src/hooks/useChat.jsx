@@ -4,6 +4,7 @@ import { auth } from "../firebase/firebase";
 import { db } from "../firebase/firebase";
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   limit,
@@ -43,7 +44,20 @@ export const ChatProvider = ({ children }) => {
     localStorage.setItem(storageKey, JSON.stringify(entries.slice(-50)));
   };
 
-  const deleteChatEntry = (entryId) => {
+  const deleteChatEntry = async (entryId) => {
+    if (!entryId) return;
+
+    // For signed-in users, delete from Firestore first so cloud + UI stay consistent.
+    if (userUid) {
+      try {
+        const entryRef = doc(db, "users", userUid, "chatHistory", entryId);
+        await deleteDoc(entryRef);
+      } catch (error) {
+        console.warn("Failed to delete chat history from Firestore.", error);
+        return;
+      }
+    }
+
     setChatHistory((prev) => {
       const updated = prev.filter((entry) => entry.id !== entryId);
       saveLocalHistory(updated);
