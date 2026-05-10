@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Installing OS dependencies..."
-apt-get update
-apt-get install -y ffmpeg wget unzip
+echo "Checking for required tools..."
+# Skip OS dependency installation on Render (ffmpeg, wget, unzip are pre-installed)
+if ! command -v wget &> /dev/null; then
+  echo "wget is required but not installed"
+  exit 1
+fi
+
+if ! command -v unzip &> /dev/null; then
+  echo "unzip is required but not installed"
+  exit 1
+fi
+
+echo "Required tools are available"
 
 echo "Installing Rhubarb Lip Sync..."
 
