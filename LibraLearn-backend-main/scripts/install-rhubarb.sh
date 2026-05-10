@@ -6,16 +6,24 @@ apt-get update
 apt-get install -y ffmpeg wget unzip
 
 echo "Installing Rhubarb Lip Sync..."
-RHUBARB_VERSION="1.13.0"
+
+RHUBARB_VERSION="1.14.0"
 ZIP_NAME="Rhubarb-Lip-Sync-${RHUBARB_VERSION}-Linux.zip"
 DOWNLOAD_URL="https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${RHUBARB_VERSION}/${ZIP_NAME}"
 
-tmp_dir="$(mktemp -d)"
-wget -O "${tmp_dir}/rhubarb.zip" "${DOWNLOAD_URL}"
-unzip -q "${tmp_dir}/rhubarb.zip" -d "${tmp_dir}"
-install "${tmp_dir}/Rhubarb-Lip-Sync-${RHUBARB_VERSION}-Linux/rhubarb" /usr/local/bin/rhubarb
-chmod +x /usr/local/bin/rhubarb
+mkdir -p bin
 
-echo "Rhubarb installed at /usr/local/bin/rhubarb"
+tmp_dir="$(mktemp -d)"
+
+wget -O "${tmp_dir}/rhubarb.zip" "${DOWNLOAD_URL}"
+
+unzip -q "${tmp_dir}/rhubarb.zip" -d "${tmp_dir}"
+
+cp "${tmp_dir}/Rhubarb-Lip-Sync-${RHUBARB_VERSION}-Linux/rhubarb" ./bin/rhubarb
+
+chmod +x ./bin/rhubarb
+
+echo "Rhubarb installed at ./bin/rhubarb"
+
 ffmpeg -version
-/usr/local/bin/rhubarb --version
+./bin/rhubarb --version
