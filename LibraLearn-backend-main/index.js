@@ -66,7 +66,7 @@ const elevenLabsApiKey =
   process.env.ELEVEN_LABS_API_KEY?.trim() ||
   process.env.ELEVENLABS_API_KEY?.trim() ||
   "";
-const voiceID = "GzE4TcXfh9rYCU9gVgPp";
+const voiceID = "EXAVITQu4vr4xnSDxMaL";
 
 const app = express();
 app.use(express.json());
