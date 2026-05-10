@@ -62,7 +62,10 @@ const parsePdfBuffer = async (pdfModule, buffer) => {
   throw new Error("Unsupported pdf-parse export format");
 };
 
-const elevenLabsApiKey = process.env.ELEVEN_LABS_API_KEY;
+const elevenLabsApiKey =
+  process.env.ELEVEN_LABS_API_KEY?.trim() ||
+  process.env.ELEVENLABS_API_KEY?.trim() ||
+  "";
 const voiceID = "hpp4J3VqNfWAUOO0d1Us";
 
 const app = express();
