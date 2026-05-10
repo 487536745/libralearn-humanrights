@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "soundFile": "D:\\5\\LibraLearn-backend-main\\audios\\message_2.wav",
+    "duration": 5.52
+  },
+  "mouthCues": [
+    { "start": 0.00, "end": 0.14, "value": "B" },
+    { "start": 0.14, "end": 0.28, "value": "C" },
+    { "start": 0.28, "end": 0.42, "value": "F" },
+    { "start": 0.42, "end": 0.56, "value": "B" },
+    { "start": 0.56, "end": 0.70, "value": "E" },
+    { "start": 0.70, "end": 0.77, "value": "C" },
+    { "start": 0.77, "end": 1.05, "value": "B" },
+    { "start": 1.05, "end": 1.13, "value": "A" },
+    { "start": 1.13, "end": 1.28, "value": "B" },
+    { "start": 1.28, "end": 1.49, "value": "D" },
+    { "start": 1.49, "end": 1.56, "value": "B" },
+    { "start": 1.56, "end": 1.84, "value": "C" },
+    { "start": 1.84, "end": 2.10, "value": "B" },
+    { "start": 2.10, "end": 2.27, "value": "A" },
+    { "start": 2.27, "end": 2.34, "value": "C" },
+    { "start": 2.34, "end": 2.54, "value": "B" },
+    { "start": 2.54, "end": 2.63, "value": "A" },
+    { "start": 2.63, "end": 2.71, "value": "B" },
+    { "start": 2.71, "end": 2.94, "value": "X" },
+    { "start": 2.94, "end": 3.42, "value": "B" },
+    { "start": 3.42, "end": 3.50, "value": "A" },
+    { "start": 3.50, "end": 3.60, "value": "D" },
+    { "start": 3.60, "end": 3.81, "value": "B" },
+    { "start": 3.81, "end": 4.02, "value": "D" },
+    { "start": 4.02, "end": 4.09, "value": "B" },
+    { "start": 4.09, "end": 4.16, "value": "D" },
+    { "start": 4.16, "end": 4.30, "value": "B" },
+    { "start": 4.30, "end": 4.38, "value": "A" },
+    { "start": 4.38, "end": 4.54, "value": "F" },
+    { "start": 4.54, "end": 4.68, "value": "B" },
+    { "start": 4.68, "end": 4.75, "value": "E" },
+    { "start": 4.75, "end": 4.83, "value": "A" },
+    { "start": 4.83, "end": 5.20, "value": "B" },
+    { "start": 5.20, "end": 5.52, "value": "X" }
+  ]
+}
