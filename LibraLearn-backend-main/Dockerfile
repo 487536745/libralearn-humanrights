@@ -14,8 +14,8 @@ RUN wget -O /tmp/rhubarb.zip "https://github.com/DanielSWolf/rhubarb-lip-sync/re
   && install -m 755 "/tmp/Rhubarb-Lip-Sync-${RHUBARB_VERSION}-Linux/rhubarb" /usr/local/bin/rhubarb \
   && rm -rf /tmp/rhubarb.zip "/tmp/Rhubarb-Lip-Sync-${RHUBARB_VERSION}-Linux"
 
-COPY package*.json ./
-RUN npm ci --omit=dev
+COPY package.json package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
 
 COPY . .
 
