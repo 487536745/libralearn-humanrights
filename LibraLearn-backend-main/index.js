@@ -75,7 +75,13 @@ let ragIndexBuildPromise = null;
 
 const resolveRhubarbExecutable = async () => {
   if (process.env.RHUBARB_PATH) {
-    return process.env.RHUBARB_PATH;
+    const candidate = process.env.RHUBARB_PATH;
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch {
+      console.warn(`RHUBARB_PATH is set to '${candidate}', but the file was not found. Falling back to local/PATH detection.`);
+    }
   }
 
   if (process.platform === "win32") {
@@ -867,7 +873,7 @@ Provide a comprehensive answer with citations.`;
       source: useFallback ? "fallback" : "rag"
     };
   } catch (error) {
-    console.error("Answer generation failed:", error);
+    logSafeError("Answer generation failed:", error);
     return {
       answer: useFallback 
         ? "I encountered an error. For human rights violations, please contact relevant authorities or support organizations."
@@ -963,7 +969,7 @@ app.post("/testRetrieval", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Test retrieval error:", error);
+    logSafeError("Test retrieval error:", error);
     return res.status(500).send({
       success: false,
       message: "Test failed",
@@ -1048,7 +1054,7 @@ app.post("/ragAsk", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Advanced RAG error:", error);
+    logSafeError("Advanced RAG error:", error);
     return res.status(500).send({
       success: false,
       message: "Failed to process question. Please try again.",
@@ -1147,7 +1153,7 @@ Return JSON with this exact shape:
       },
     });
   } catch (error) {
-    console.error("startQuiz error:", error);
+    logSafeError("startQuiz error:", error);
     return res.status(500).send({
       message: "Failed to generate quiz scenario.",
       sessionId: activeSessionId,
@@ -1255,7 +1261,7 @@ Return JSON with exactly:
           "Keep going. Your awareness grows with every scenario.",
       };
     } catch (error) {
-      console.error("submitAnswer AI error:", error);
+      logSafeError("submitAnswer AI error:", error);
       evaluationPayload = fallbackEvaluation(userChoice, correctAnswer);
     }
   }
@@ -1295,8 +1301,36 @@ const execCommand = (command) => {
   });
 };
 
+const isElevenLabsUnauthorizedError = (error) => {
+  const status = error?.response?.status;
+  return status === 401;
+};
+
+const logSafeError = (label, error) => {
+  console.error(label, {
+    message: error?.message || "Unknown error",
+    code: error?.code,
+    status: error?.response?.status,
+  });
+};
+
+const ensureFileExists = async (filePath) => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const lipSyncMessage = async (message) => {
   const time = new Date().getTime();
+  const mp3Path = path.join(__dirname, `audios/message_${message}.mp3`);
+  const hasMp3 = await ensureFileExists(mp3Path);
+  if (!hasMp3) {
+    throw new Error(`Audio file missing before ffmpeg conversion: ${mp3Path}`);
+  }
+
   console.log(`Starting conversion for message ${message}`);
   await execCommand(
     `ffmpeg -y -i audios/message_${message}.mp3 audios/message_${message}.wav`
@@ -1459,16 +1493,29 @@ app.post("/chat", async (req, res) => {
   if (messages.messages) {
     messages = messages.messages; // ChatGPT is not 100% reliable, sometimes it directly returns an array and sometimes a JSON object with a messages property
   }
-  for (let i = 0; i < messages.length; i++) {
-    const message = messages[i];
-    // generate audio file
-    const fileName = `audios/message_${i}.mp3`; // The name of your audio file
-    const textInput = message.text; // The text you wish to convert to speech
-    await voice.textToSpeech(elevenLabsApiKey, voiceID, fileName, textInput);
-    // generate lipsync
-    await lipSyncMessage(i);
-    message.audio = await audioFileToBase64(fileName);
-    message.lipsync = await readJsonTranscript(`audios/message_${i}.json`);
+  try {
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      // generate audio file
+      const fileName = `audios/message_${i}.mp3`; // The name of your audio file
+      const textInput = message.text; // The text you wish to convert to speech
+      await voice.textToSpeech(elevenLabsApiKey, voiceID, fileName, textInput);
+      // generate lipsync
+      await lipSyncMessage(i);
+      message.audio = await audioFileToBase64(fileName);
+      message.lipsync = await readJsonTranscript(`audios/message_${i}.json`);
+    }
+  } catch (error) {
+    logSafeError("Chat TTS/lipsync error:", error);
+    if (isElevenLabsUnauthorizedError(error)) {
+      return res.status(502).send({
+        message:
+          "ElevenLabs rejected the API key (401 Unauthorized). Update ELEVEN_LABS_API_KEY in Render Environment and redeploy.",
+      });
+    }
+    return res.status(500).send({
+      message: "Failed to generate avatar speech/lipsync. Please try again.",
+    });
   }
 
   res.send({ messages });
@@ -1537,7 +1584,13 @@ app.post("/tts", async (req, res) => {
     fs.unlink(jsonPath).catch(console.error);
 
   } catch (error) {
-    console.error("TTS endpoint error:", error);
+    logSafeError("TTS endpoint error:", error);
+    if (isElevenLabsUnauthorizedError(error)) {
+      return res.status(502).send({
+        message:
+          "ElevenLabs rejected the API key (401 Unauthorized). Update ELEVEN_LABS_API_KEY in Render Environment and redeploy.",
+      });
+    }
     res.status(500).send({ message: "Failed to generate speech" });
   }
 });
